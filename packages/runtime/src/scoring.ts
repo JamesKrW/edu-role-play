@@ -70,8 +70,13 @@ export async function scoreTranscript(
     throw new Error("the grader returned no usable result");
   }
 
-  const weights = new Map(comp.rubric.map((c) => [c.objectiveId, c.weight]));
-  const maxTotal = comp.rubric.reduce((s, c) => s + c.weight, 0);
+  // Several criteria for one objective add up; maxTotal is what can be earned.
+  const weights = new Map<string, number>();
+  for (const c of comp.rubric) {
+    if (Number.isFinite(c.weight) && c.weight > 0) {
+      weights.set(c.objectiveId, (weights.get(c.objectiveId) ?? 0) + c.weight);
+    }
+  }
 
   const per = comp.objectives.map((o) => {
     const w = weights.get(o.id) ?? 0;
@@ -87,6 +92,7 @@ export async function scoreTranscript(
   });
 
   const total = per.reduce((s, p) => s + p.score, 0);
+  const maxTotal = per.reduce((s, p) => s + p.maxScore, 0);
   return {
     total,
     maxTotal,
