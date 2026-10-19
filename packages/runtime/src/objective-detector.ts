@@ -37,8 +37,9 @@ export async function detectCompletedObjectives(
     );
     const arr = extractJsonArray(reply);
     if (!Array.isArray(arr)) return new Set();
-    const known = new Set(comp.objectives.map((o) => o.id));
-    return new Set(arr.filter((v): v is string => typeof v === "string" && known.has(v)));
+    return new Set(
+      arr.filter((v): v is string => typeof v === "string" && v.length > 0),
+    );
   } catch {
     return new Set();
   }
