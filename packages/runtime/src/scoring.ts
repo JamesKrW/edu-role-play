@@ -57,12 +57,19 @@ export async function scoreTranscript(
 
   if (!parsed || !Array.isArray(parsed.perObjective)) {
     // retry once
+    parsed = null;
     try {
       reply = await provider.chat(messages, { temperature: 0 });
       parsed = extractJsonObject(reply) as typeof parsed;
     } catch {
       /* swallow */
     }
+  }
+
+  // No usable grade after the retry: fail loudly instead of reporting a
+  // "completed" 0 to the LMS (the caller shows "Scoring failed").
+  if (!parsed || !Array.isArray(parsed.perObjective)) {
+    throw new Error("the grader returned no usable result");
   }
 
   const weights = new Map(comp.rubric.map((c) => [c.objectiveId, c.weight]));
